@@ -27,15 +27,34 @@
 - 가능한 경우 수식에 사용한 기호와 코드의 변수명을 일치시킵니다.
 - 시각화에 필요한 라이브러리와 실행 방법을 각 파일에 명시합니다.
 
+## 2009학년도 시험 시각화
+
+`references/diffgeopy.pdf` 1-5쪽의 2009학년도 문제를 다음 파일에서 다룹니다.
+
+| 문항 | 파일 | 시각화 내용 |
+|---:|---|---|
+| 35 | `exam_2009_q35_torsion.py` | `beta(t)=2 alpha(-2t)`에서 확대와 재매개화가 비틀림에 미치는 영향, Frenet 표준틀 |
+| 36 | `exam_2009_q36_developable_surface.py` | `x(u,v)=(u,v,u^3+2v)`의 선직면 구조, `K=0`, 등거리 전개와 측지삼각형 |
+
+두 시각화는 마우스로 회전·확대하고 각 곡선과 곡면 위의 값을 확인할 수 있는 Plotly
+대화형 그래프로 작성되어 있습니다.
+
 ## 실행
 
-저장소의 최상위 디렉터리에서 다음과 같이 Python 파일을 실행합니다.
+Python 3.10 이상과 NumPy, Plotly가 필요합니다.
 
 ```powershell
-python .\supplement_exam\test.py
+pip install numpy plotly
+python .\supplement_exam\exam_2009_q35_torsion.py
+python .\supplement_exam\exam_2009_q36_developable_surface.py
 ```
 
-필요한 Python 버전과 의존성은 프로젝트 구성이 확정된 후 이 문서에 추가할 예정입니다.
+브라우저를 열지 않고 공유 가능한 단일 HTML 파일로 저장할 수도 있습니다.
+
+```powershell
+python .\supplement_exam\exam_2009_q35_torsion.py --output .\output\exam_2009_q35.html --no-show
+python .\supplement_exam\exam_2009_q36_developable_surface.py --output .\output\exam_2009_q36.html --no-show
+```
 
 ## 기여
 
