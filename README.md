@@ -1,4 +1,4 @@
-# SRC Differential Geometry
+# IMC Differential Geometry
 
 기존 교재의 Mathematica 구현을 Python으로 이관하고, 미분기하학의 주요 기하적
 대상을 시각화하는 학부 수준의 코드북 프로젝트입니다. 교재의 수학적 내용과 기존
