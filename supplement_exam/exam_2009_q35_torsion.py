@@ -28,6 +28,7 @@ from plotly.subplots import make_subplots
 FRAME_COLORS = {"T": "#E45756", "N": "#54A24B", "B": "#4C78A8"}
 
 
+# 수학적 정의와 계산
 def alpha(theta: np.ndarray | float, pitch: float) -> np.ndarray:
     """원나선 alpha(theta)를 마지막 축의 길이가 3이 되도록 반환한다."""
     theta_array = np.asarray(theta)
@@ -50,6 +51,11 @@ def beta_derivatives(t: float, pitch: float) -> tuple[np.ndarray, ...]:
     return -4.0 * first, 8.0 * second, -16.0 * third
 
 
+def beta(t: np.ndarray | float, pitch: float) -> np.ndarray:
+    """변환된 곡선 beta(t)=2 alpha(-2t)를 반환한다."""
+    return 2.0 * alpha(-2.0 * np.asarray(t), pitch)
+
+
 def torsion(derivatives: tuple[np.ndarray, ...]) -> float:
     """tau=((r' x r'') . r''') / ||r' x r''||^2를 계산한다."""
     first, second, third = derivatives
@@ -67,6 +73,7 @@ def frenet_frame(derivatives: tuple[np.ndarray, ...]) -> np.ndarray:
     return np.stack((tangent, normal, binormal))
 
 
+# 이 문항의 시각화 구성
 def add_frenet_frame(
     figure: go.Figure,
     point: np.ndarray,
@@ -99,13 +106,13 @@ def add_frenet_frame(
 
 def build_figure(pitch: float = 0.35) -> go.Figure:
     """35번의 비틀림 변환을 설명하는 대화형 Plotly 그림을 만든다."""
-    if pitch <= 0:
+    if not np.isfinite(pitch) or pitch <= 0:
         raise ValueError("문제의 조건 tau > 0을 나타내려면 pitch가 양수여야 합니다.")
 
     theta = np.linspace(-2.0 * np.pi, 2.0 * np.pi, 500)
     t = np.linspace(-np.pi, np.pi, 500)
     alpha_points = alpha(theta, pitch)
-    beta_points = 2.0 * alpha(-2.0 * t, pitch)
+    beta_points = beta(t, pitch)
 
     tau_alpha = torsion(alpha_derivatives(0.0, pitch))
     tau_beta = torsion(beta_derivatives(0.0, pitch))
@@ -142,7 +149,7 @@ def build_figure(pitch: float = 0.35) -> go.Figure:
         )
 
     alpha_zero = alpha(0.0, pitch)
-    beta_zero = 2.0 * alpha_zero
+    beta_zero = beta(0.0, pitch)
     add_frenet_frame(
         figure,
         alpha_zero,
@@ -184,6 +191,7 @@ def build_figure(pitch: float = 0.35) -> go.Figure:
         scene=common_scene,
         scene2=common_scene,
         annotations=[
+            *figure.layout.annotations,
             {
                 "text": (
                     "β'=-4α', β''=8α'', β'''=-16α'''이므로 "
@@ -201,7 +209,9 @@ def build_figure(pitch: float = 0.35) -> go.Figure:
     return figure
 
 
+# 실행 옵션과 HTML 저장
 def parse_args() -> argparse.Namespace:
+    """문항의 매개변수와 출력 옵션을 읽는다."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--pitch", type=float, default=0.35, help="예시 원나선의 양의 pitch (기본값: 0.35)"
@@ -212,6 +222,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """그림을 생성하고 요청한 경우 HTML 저장 또는 화면 표시를 실행한다."""
     args = parse_args()
     figure = build_figure(args.pitch)
     if args.output:
