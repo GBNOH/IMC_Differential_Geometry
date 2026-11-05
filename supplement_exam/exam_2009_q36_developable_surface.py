@@ -30,6 +30,7 @@ from plotly.subplots import make_subplots
 SQRT_FIVE = np.sqrt(5.0)
 
 
+# 수학적 정의와 계산
 def surface(u: np.ndarray, v: np.ndarray) -> tuple[np.ndarray, ...]:
     """x(u,v)=(u,v,u^3+2v)의 x, y, z 성분을 반환한다."""
     return u, v, u**3 + 2.0 * v
@@ -86,6 +87,22 @@ def sampled_triangle_edges(vertices: np.ndarray, points_per_edge: int = 100) -> 
     return np.vstack((*pieces, vertices[0][None, :]))
 
 
+def geodesic_triangle(vertices: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """전개평면 삼각형의 변을 곡면으로 옮기고 내각을 반환한다.
+
+    반환값은 (n, 3) 형태의 공간 좌표와 세 내각(라디안)이다.
+    """
+    u_lookup, s_lookup = arc_coordinate_grid(-2.1, 2.1)
+    edge_points = sampled_triangle_edges(vertices)
+    if np.any(edge_points[:, 0] < s_lookup[0]) or np.any(edge_points[:, 0] > s_lookup[-1]):
+        raise ValueError("삼각형의 s 좌표가 전개 좌표표 범위를 벗어났습니다.")
+    coordinates = map_developed_to_surface(
+        edge_points[:, 0], edge_points[:, 1], u_lookup, s_lookup
+    )
+    return np.column_stack(coordinates), triangle_angles(vertices)
+
+
+# 이 문항의 시각화 구성
 def build_figure() -> go.Figure:
     """36번의 선직면, rulings, 등거리 전개, 측지삼각형을 함께 그린다."""
     u_values = np.linspace(-2.0, 2.0, 151)
@@ -93,14 +110,10 @@ def build_figure() -> go.Figure:
     u_mesh, v_mesh = np.meshgrid(u_values, v_values, indexing="ij")
     x_mesh, y_mesh, z_mesh = surface(u_mesh, v_mesh)
 
-    u_lookup, s_lookup = arc_coordinate_grid(-2.1, 2.1)
     triangle = np.array([[-1.45, -1.0], [1.35, -0.7], [0.15, 1.45]])
     closed_triangle = np.vstack((triangle, triangle[0]))
-    edge_points = sampled_triangle_edges(triangle)
-    geo_x, geo_y, geo_z = map_developed_to_surface(
-        edge_points[:, 0], edge_points[:, 1], u_lookup, s_lookup
-    )
-    angles = triangle_angles(triangle)
+    triangle_points, angles = geodesic_triangle(triangle)
+    geo_x, geo_y, geo_z = triangle_points.T
     angle_sum = float(np.sum(angles))
 
     figure = make_subplots(
@@ -249,6 +262,7 @@ def build_figure() -> go.Figure:
             "camera": {"eye": {"x": 1.4, "y": 1.65, "z": 0.85}},
         },
         annotations=[
+            *figure.layout.annotations,
             {
                 "text": "M=N=0 ⇒ K=(LN-M²)/(EG-F²)=0",
                 "xref": "paper",
@@ -272,7 +286,9 @@ def build_figure() -> go.Figure:
     return figure
 
 
+# 실행 옵션과 HTML 저장
 def parse_args() -> argparse.Namespace:
+    """HTML 저장과 화면 표시 옵션을 읽는다."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="대화형 HTML을 저장할 경로")
     parser.add_argument("--no-show", action="store_true", help="브라우저 창을 열지 않음")
@@ -280,6 +296,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """그림을 생성하고 요청한 경우 HTML 저장 또는 화면 표시를 실행한다."""
     args = parse_args()
     figure = build_figure()
     if args.output:
